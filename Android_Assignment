@@ -1,0 +1,87 @@
+#Define Widget Layout
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@drawable/widget_background">
+
+    <TextView
+        android:id="@+id/quote_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Stay positive, work hard, make it happen."
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:gravity="center"
+        android:padding="8dp" />
+
+    <TextView
+        android:id="@+id/author_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="- Author Name"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:padding="4dp"
+        android:layout_below="@id/quote_text" />
+
+</RelativeLayout>
+
+#Create Widget Provider
+
+<receiver android:name=".QuoteWidgetProvider">
+    <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+    </intent-filter>
+    <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/quote_widget_info" />
+</receiver>
+
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:initialLayout="@layout/quote_widget"
+    android:updatePeriodMillis="0"
+    android:resizeMode="horizontal|vertical"
+    android:minWidth="150dp"
+    android:minHeight="150dp"
+    android:widgetCategory="home_screen" />
+
+
+#Handle Widget Updates
+class QuoteWidgetProvider : AppWidgetProvider() {
+
+    private val quotes = listOf(
+        "Believe in yourself - Unknown",
+        "Hard work beats talent - Tim Notke",
+        "Stay positive - Unknown",
+        // Add more quotes here (minimum 20)
+    )
+
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        for (widgetId in appWidgetIds) {
+            val randomQuote = quotes.random()
+            val parts = randomQuote.split(" - ")
+            val quote = parts[0]
+            val author = parts.getOrElse(1) { "Unknown" }
+
+            val views = RemoteViews(context.packageName, R.layout.quote_widget)
+            views.setTextViewText(R.id.quote_text, quote)
+            views.setTextViewText(R.id.author_name, "- $author")
+
+            val intent = Intent(context, QuoteWidgetProvider::class.java).apply {
+                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+            }
+            val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+            views.setOnClickPendingIntent(R.id.quote_text, pendingIntent)
+
+            appWidgetManager.updateAppWidget(widgetId, views)
+        }
+    }
+}
+
+
+
+
